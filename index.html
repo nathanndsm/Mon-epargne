@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon budget</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy-950: #0a1626;
+    --navy-900: #0f2038;
+    --navy-850: #12274a;
+    --navy-800: #1a3358;
+    --navy-700: #24466f;
+    --gold-500: #c9a24b;
+    --gold-400: #d9b96a;
+    --gold-300: #e6cd8e;
+    --cream: #f1ead9;
+    --muted: #8ea0ba;
+    --danger: #c26a5a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse at top, #102542 0%, var(--navy-950) 55%);
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 28px 20px 80px;
+  }
+
+  header.top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1.7rem;
+    letter-spacing: 0.2px;
+    margin: 0;
+    color: var(--gold-300);
+  }
+
+  .total-net {
+    text-align: right;
+  }
+
+  .total-net .label {
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .total-net .value {
+    font-family: 'Fraunces', serif;
+    font-size: 1.5rem;
+    color: var(--cream);
+  }
+
+  .subline {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-bottom: 34px;
+    max-width: 60ch;
+    line-height: 1.5;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+
+  @media (max-width: 760px) {
+    .board { grid-template-columns: 1fr; }
+    .total-net { text-align: left; }
+    header.top { flex-direction: column; }
+  }
+
+  .panel {
+    background: linear-gradient(180deg, var(--navy-900), var(--navy-850));
+    border: 1px solid var(--navy-700);
+    border-radius: 14px;
+    padding: 22px 20px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .panel::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold-500), transparent 70%);
+  }
+
+  .panel h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: 1.15rem;
+    margin: 0 0 3px;
+    color: var(--cream);
+  }
+
+  .panel .desc {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin: 0 0 16px;
+  }
+
+  .pool-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--navy-700);
+  }
+
+  .pool-row label {
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .pool-input {
+    background: var(--navy-950);
+    border: 1px solid var(--navy-700);
+    border-radius: 8px;
+    color: var(--gold-300);
+    font-family: 'Fraunces', serif;
+    font-size: 1.15rem;
+    padding: 6px 10px;
+    width: 130px;
+    text-align: right;
+  }
+  .pool-input:focus { outline: none; border-color: var(--gold-500); }
+
+  .stackbar {
+    display: flex;
+    width: 100%;
+    height: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--navy-950);
+    margin-bottom: 6px;
+    border: 1px solid var(--navy-700);
+  }
+
+  .stackbar .seg {
+    height: 100%;
+  }
+
+  .stackbar .rest {
+    background: transparent;
+  }
+
+  .alloc-summary {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.76rem;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .alloc-summary .over {
+    color: var(--danger);
+  }
+
+  .cat-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cat-row {
+    background: var(--navy-950);
+    border: 1px solid var(--navy-800);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .cat-top {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    flex: none;
+  }
+
+  .cat-name {
+    background: transparent;
+    border: none;
+    color: var(--cream);
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 0.94rem;
+    flex: 1;
+    min-width: 0;
+    padding: 3px 4px;
+    border-radius: 5px;
+  }
+  .cat-name:focus { outline: none; background: var(--navy-800); }
+
+  .cat-amount {
+    background: transparent;
+    border: none;
+    color: var(--gold-300);
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.94rem;
+    width: 78px;
+    text-align: right;
+    padding: 3px 4px;
+    border-radius: 5px;
+  }
+  .cat-amount:focus { outline: none; background: var(--navy-800); }
+
+  .cat-del {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 2px 4px;
+    flex: none;
+  }
+  .cat-del:hover { color: var(--danger); }
+
+  .cat-bar-track {
+    margin-top: 8px;
+    height: 5px;
+    border-radius: 4px;
+    background: var(--navy-850);
+    overflow: hidden;
+  }
+
+  .cat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+  }
+
+  .add-cat {
+    margin-top: 14px;
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--navy-700);
+    color: var(--muted);
+    border-radius: 10px;
+    padding: 9px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: border-color .15s, color .15s;
+  }
+  .add-cat:hover {
+    border-color: var(--gold-500);
+    color: var(--gold-300);
+  }
+
+  .empty-hint {
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-style: italic;
+    padding: 6px 2px 2px;
+  }
+
+  footer.note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    margin-top: 34px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <header class="top">
+    <h1>Mon budget</h1>
+    <div class="total-net">
+      <div class="label">Épargne + revenu du mois</div>
+      <div class="value" id="totalNet">0 €</div>
+    </div>
+  </header>
+  <p class="subline">Deux poches séparées : ce que tu as déjà mis de côté, et ce que tu reçois ce mois-ci. Renomme les catégories comme tu veux, ajoute ou supprime-en, les montants se répartissent automatiquement.</p>
+
+  <div class="board">
+
+    <section class="panel" id="panel-savings">
+      <h2>Épargne allouée</h2>
+      <p class="desc">L'argent déjà économisé, réparti par usage.</p>
+
+      <div class="pool-row">
+        <label for="savingsTotal">Total épargné</label>
+        <input type="number" id="savingsTotal" class="pool-input" min="0" step="1">
+      </div>
+
+      <div class="stackbar" id="savingsBar"></div>
+      <div class="alloc-summary" id="savingsSummary"></div>
+
+      <div class="cat-list" id="savingsList"></div>
+      <button class="add-cat" data-pool="savings">+ Ajouter une catégorie d'épargne</button>
+    </section>
+
+    <section class="panel" id="panel-income">
+      <h2>Revenu du mois</h2>
+      <p class="desc">Ce que tu reçois ce mois-ci, réparti par poste.</p>
+
+      <div class="pool-row">
+        <label for="incomeTotal">Revenu du mois</label>
+        <input type="number" id="incomeTotal" class="pool-input" min="0" step="1">
+      </div>
+
+      <div class="stackbar" id="incomeBar"></div>
+      <div class="alloc-summary" id="incomeSummary"></div>
+
+      <div class="cat-list" id="incomeList"></div>
+      <button class="add-cat" data-pool="income">+ Ajouter une catégorie de dépense</button>
+    </section>
+
+  </div>
+
+  <footer class="note">Tout est sauvegardé automatiquement sur cet appareil.</footer>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = "budgetAppData_v1";
+  const DB_PATH = "data/budget";
+
+  const PALETTE = ["#c9a24b", "#7fa3c9", "#b98a7a", "#8fbf9f", "#c98fb0", "#a5a0d8", "#d9b96a", "#6fb3ad"];
+
+  const defaultState = {
+    savings: {
+      total: 850,
+      categories: [
+        { id: cryptoId(), name: "Voyage Lisbonne", amount: 300 },
+        { id: cryptoId(), name: "Fonds d'urgence", amount: 400 }
+      ]
+    },
+    income: {
+      total: 600,
+      categories: [
+        { id: cryptoId(), name: "Nourriture", amount: 220 },
+        { id: cryptoId(), name: "Sorties", amount: 120 },
+        { id: cryptoId(), name: "Dépenses souk", amount: 60 }
+      ]
+    }
+  };
+
+  function cryptoId() {
+    return Math.random().toString(36).slice(2, 10);
+  }
+
+  function loadLocalState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed.savings || !parsed.income) throw new Error("shape");
+      return parsed;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  let state = loadLocalState() || structuredClone(defaultState);
+
+  // --- Persistence: localStorage for instant local cache, db for real
+  // cross-session storage (survives closing the home-screen app on iOS,
+  // where localStorage inside a standalone web app is not reliable). ---
+  let dbRef = null;
+  let dbWriting = false;
+  let dbDirty = false;
+  let dbDebounce = null;
+
+  function saveLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) { /* storage unavailable, continue silently */ }
+  }
+
+  async function flushDb() {
+    if (!dbRef) return;
+    if (dbWriting) { dbDirty = true; return; }
+    dbWriting = true;
+    try {
+      await dbRef.set(structuredClone(state));
+    } catch (e) { /* offline or rejected, localStorage still has it */ }
+    dbWriting = false;
+    if (dbDirty) { dbDirty = false; flushDb(); }
+  }
+
+  function saveState() {
+    saveLocal();
+    clearTimeout(dbDebounce);
+    dbDebounce = setTimeout(flushDb, 700);
+  }
+
+  async function initDb() {
+    if (!window.claude || typeof window.claude.use !== "function") return;
+    try {
+      const db = await window.claude.use("db");
+      if (!db) return;
+      dbRef = db.doc(DB_PATH);
+      const snap = await dbRef.get();
+      if (snap.exists) {
+        const data = snap.data();
+        if (data && data.savings && data.income) {
+          state = data;
+          saveLocal();
+          renderPool("savings");
+          renderPool("income");
+        }
+      } else {
+        // first time this artifact is opened: seed the store with
+        // whatever we currently have (local cache or defaults)
+        flushDb();
+      }
+    } catch (e) { /* db unavailable, localStorage remains the source of truth */ }
+  }
+
+  function fmt(n) {
+    const v = Number(n) || 0;
+    return v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + " €";
+  }
+
+  function renderPool(key) {
+    const pool = state[key];
+    const list = document.getElementById(key + "List");
+    const bar = document.getElementById(key + "Bar");
+    const summary = document.getElementById(key + "Summary");
+    const totalInput = document.getElementById(key + "Total");
+
+    totalInput.value = pool.total;
+
+    const allocated = pool.categories.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const remaining = pool.total - allocated;
+
+    bar.innerHTML = "";
+    pool.categories.forEach((cat, i) => {
+      const pct = pool.total > 0 ? Math.max(0, (Number(cat.amount) || 0) / pool.total * 100) : 0;
+      const seg = document.createElement("div");
+      seg.className = "seg";
+      seg.style.width = pct + "%";
+      seg.style.background = PALETTE[i % PALETTE.length];
+      bar.appendChild(seg);
+    });
+    const rest = document.createElement("div");
+    rest.className = "seg rest";
+    rest.style.width = Math.max(0, pool.total > 0 ? remaining / pool.total * 100 : 0) + "%";
+    bar.appendChild(rest);
+
+    summary.innerHTML = "";
+    const left = document.createElement("span");
+    left.textContent = fmt(allocated) + " affectés";
+    const right = document.createElement("span");
+    if (remaining < 0) {
+      right.textContent = fmt(Math.abs(remaining)) + " en trop";
+      right.className = "over";
+    } else {
+      right.textContent = fmt(remaining) + " non affectés";
+    }
+    summary.appendChild(left);
+    summary.appendChild(right);
+
+    list.innerHTML = "";
+    if (pool.categories.length === 0) {
+      const hint = document.createElement("div");
+      hint.className = "empty-hint";
+      hint.textContent = "Aucune catégorie pour l'instant.";
+      list.appendChild(hint);
+    }
+
+    pool.categories.forEach((cat, i) => {
+      const row = document.createElement("div");
+      row.className = "cat-row";
+
+      const top = document.createElement("div");
+      top.className = "cat-top";
+
+      const swatch = document.createElement("span");
+      swatch.className = "swatch";
+      swatch.style.background = PALETTE[i % PALETTE.length];
+
+      const nameInput = document.createElement("input");
+      nameInput.className = "cat-name";
+      nameInput.value = cat.name;
+      nameInput.spellcheck = false;
+      nameInput.addEventListener("input", () => {
+        cat.name = nameInput.value;
+        saveState();
+      });
+
+      const amountInput = document.createElement("input");
+      amountInput.type = "number";
+      amountInput.className = "cat-amount";
+      amountInput.value = cat.amount;
+      amountInput.min = "0";
+      amountInput.addEventListener("input", () => {
+        cat.amount = amountInput.value === "" ? 0 : Number(amountInput.value);
+        updateVisuals(key);
+        saveState();
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.className = "cat-del";
+      delBtn.innerHTML = "&times;";
+      delBtn.title = "Supprimer";
+      delBtn.addEventListener("click", () => {
+        pool.categories = pool.categories.filter(c => c.id !== cat.id);
+        renderPool(key);
+        saveState();
+      });
+
+      top.appendChild(swatch);
+      top.appendChild(nameInput);
+      top.appendChild(amountInput);
+      top.appendChild(delBtn);
+
+      const track = document.createElement("div");
+      track.className = "cat-bar-track";
+      const fill = document.createElement("div");
+      fill.className = "cat-bar-fill";
+      const pct = pool.total > 0 ? Math.min(100, Math.max(0, (Number(cat.amount) || 0) / pool.total * 100)) : 0;
+      fill.style.width = pct + "%";
+      fill.style.background = PALETTE[i % PALETTE.length];
+      track.appendChild(fill);
+
+      row.appendChild(top);
+      row.appendChild(track);
+      list.appendChild(row);
+    });
+
+    renderTotalNet();
+  }
+
+  function renderTotalNet() {
+    const net = (Number(state.savings.total) || 0) + (Number(state.income.total) || 0);
+    document.getElementById("totalNet").textContent = fmt(net);
+  }
+
+  // Recomputes bars/summary in place, without touching the input
+  // elements themselves — safe to call on every keystroke.
+  function updateVisuals(key) {
+    const pool = state[key];
+    const bar = document.getElementById(key + "Bar");
+    const summary = document.getElementById(key + "Summary");
+    const list = document.getElementById(key + "List");
+
+    const allocated = pool.categories.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const remaining = pool.total - allocated;
+
+    const segs = bar.querySelectorAll(".seg:not(.rest)");
+    pool.categories.forEach((cat, i) => {
+      const pct = pool.total > 0 ? Math.max(0, (Number(cat.amount) || 0) / pool.total * 100) : 0;
+      if (segs[i]) segs[i].style.width = pct + "%";
+    });
+    const rest = bar.querySelector(".seg.rest");
+    if (rest) rest.style.width = Math.max(0, pool.total > 0 ? remaining / pool.total * 100 : 0) + "%";
+
+    summary.innerHTML = "";
+    const left = document.createElement("span");
+    left.textContent = fmt(allocated) + " affectés";
+    const right = document.createElement("span");
+    if (remaining < 0) {
+      right.textContent = fmt(Math.abs(remaining)) + " en trop";
+      right.className = "over";
+    } else {
+      right.textContent = fmt(remaining) + " non affectés";
+    }
+    summary.appendChild(left);
+    summary.appendChild(right);
+
+    const rows = list.querySelectorAll(".cat-row");
+    pool.categories.forEach((cat, i) => {
+      const fillEl = rows[i] ? rows[i].querySelector(".cat-bar-fill") : null;
+      if (fillEl) {
+        const pct = pool.total > 0 ? Math.min(100, Math.max(0, (Number(cat.amount) || 0) / pool.total * 100)) : 0;
+        fillEl.style.width = pct + "%";
+      }
+    });
+
+    renderTotalNet();
+  }
+
+  document.getElementById("savingsTotal").addEventListener("input", (e) => {
+    state.savings.total = e.target.value === "" ? 0 : Number(e.target.value);
+    updateVisuals("savings");
+    saveState();
+  });
+
+  document.getElementById("incomeTotal").addEventListener("input", (e) => {
+    state.income.total = e.target.value === "" ? 0 : Number(e.target.value);
+    updateVisuals("income");
+    saveState();
+  });
+
+  document.querySelectorAll(".add-cat").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.getAttribute("data-pool");
+      state[key].categories.push({ id: cryptoId(), name: "Nouvelle catégorie", amount: 0 });
+      renderPool(key);
+      saveState();
+    });
+  });
+
+  renderPool("savings");
+  renderPool("income");
+  initDb();
+})();
+</script>
+
+</body>
+</html>
